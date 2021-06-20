@@ -1,0 +1,566 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 197,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import sklearn\n",
+    "import sklearn.model_selection as ms\n",
+    "import sklearn.feature_extraction.text as text\n",
+    "import sklearn.naive_bayes as nb\n",
+    "from sklearn.naive_bayes import MultinomialNB\n",
+    "import matplotlib.pyplot as plt\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.feature_extraction.text import CountVectorizer\n",
+    "from sklearn.metrics import accuracy_score, precision_score, recall_score\n",
+    "from sklearn.metrics import confusion_matrix\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "%matplotlib inline\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 198,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>title</th>\n",
+       "      <th>category</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>28169</th>\n",
+       "      <td>Doctrine Query Builder Delete Statement</td>\n",
+       "      <td>php</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28170</th>\n",
+       "      <td>Storing a website&amp;#39;s link in MYSQL database...</td>\n",
+       "      <td>php</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28171</th>\n",
+       "      <td>How do I parse this API json data in PHP?</td>\n",
+       "      <td>php</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28172</th>\n",
+       "      <td>Reading doc &amp;amp; docx file with PHPWord library</td>\n",
+       "      <td>php</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28173</th>\n",
+       "      <td>How to make woocommerce Add To Cart Button as ...</td>\n",
+       "      <td>php</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                                   title category\n",
+       "28169            Doctrine Query Builder Delete Statement      php\n",
+       "28170  Storing a website&#39;s link in MYSQL database...      php\n",
+       "28171          How do I parse this API json data in PHP?      php\n",
+       "28172   Reading doc &amp; docx file with PHPWord library      php\n",
+       "28173  How to make woocommerce Add To Cart Button as ...      php"
+      ]
+     },
+     "execution_count": 198,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df = pd.read_csv('StackOverflow-Dataset.csv',delimiter = ';')\n",
+    "\n",
+    "df[['title', 'category']].tail()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 199,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>title</th>\n",
+       "      <th>category</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>Using entries from other kivy classes</td>\n",
+       "      <td>python</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>Package python software with pylucene dependency</td>\n",
+       "      <td>python</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Extracting time with regex from a string</td>\n",
+       "      <td>python</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>How do I add specific headers before each form...</td>\n",
+       "      <td>python</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>Barplot from a dataframe using a column to set...</td>\n",
+       "      <td>python</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                               title category\n",
+       "0              Using entries from other kivy classes   python\n",
+       "1   Package python software with pylucene dependency   python\n",
+       "2           Extracting time with regex from a string   python\n",
+       "3  How do I add specific headers before each form...   python\n",
+       "4  Barplot from a dataframe using a column to set...   python"
+      ]
+     },
+     "execution_count": 199,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df[['title', 'category']].head()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 200,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['label'] = df['category'].apply(lambda x:0 if x=='python' else (1 if x=='java' else (2 if x=='php' else (3 if x=='R' else 4))))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 201,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>title</th>\n",
+       "      <th>category</th>\n",
+       "      <th>label</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>28169</th>\n",
+       "      <td>Doctrine Query Builder Delete Statement</td>\n",
+       "      <td>php</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28170</th>\n",
+       "      <td>Storing a website&amp;#39;s link in MYSQL database...</td>\n",
+       "      <td>php</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28171</th>\n",
+       "      <td>How do I parse this API json data in PHP?</td>\n",
+       "      <td>php</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28172</th>\n",
+       "      <td>Reading doc &amp;amp; docx file with PHPWord library</td>\n",
+       "      <td>php</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28173</th>\n",
+       "      <td>How to make woocommerce Add To Cart Button as ...</td>\n",
+       "      <td>php</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                                   title category  label\n",
+       "28169            Doctrine Query Builder Delete Statement      php      2\n",
+       "28170  Storing a website&#39;s link in MYSQL database...      php      2\n",
+       "28171          How do I parse this API json data in PHP?      php      2\n",
+       "28172   Reading doc &amp; docx file with PHPWord library      php      2\n",
+       "28173  How to make woocommerce Add To Cart Button as ...      php      2"
+      ]
+     },
+     "execution_count": 201,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df[['title', 'category','label']].tail()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 202,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = train_test_split(df['title'], df['label'], random_state=1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 203,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cv = CountVectorizer(strip_accents='ascii', token_pattern=u'(?ui)\\\\b\\\\w*[a-z]+\\\\w*\\\\b', lowercase=True, stop_words='english')\n",
+    "X_train_cv = cv.fit_transform(X_train)\n",
+    "X_test_cv = cv.transform(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 204,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "naive_bayes = MultinomialNB()\n",
+    "naive_bayes.fit(X_train_cv, y_train)\n",
+    "predictions = naive_bayes.predict(X_test_cv)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 205,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Accuracy score:  0.8018171493469619\n",
+      "Precision Score :  0.8111726916644344\n",
+      "Recall Score :  0.7998325056750883\n"
+     ]
+    }
+   ],
+   "source": [
+    "print('Accuracy score: ', accuracy_score(y_test, predictions))\n",
+    "# print('Precision score: ', precision_score(y_test, predictions))\n",
+    "# print('Recall score: ', recall_score(y_test, predictions))\n",
+    "\n",
+    "print(\"Precision Score : \",precision_score(y_test, predictions,average='macro'))\n",
+    "print(\"Recall Score : \",recall_score(y_test, predictions,average='macro'))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 206,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Text(91.68, 0.5, 'predicted label')"
+      ]
+     },
+     "execution_count": 206,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "cm = confusion_matrix(y_test, predictions)\n",
+    "sns.heatmap(cm, square=True, annot=True, cmap='RdBu', cbar=False,\n",
+    "xticklabels=['python', 'java','php','R','javascript'], yticklabels=['python', 'java','php','R','javascript'])\n",
+    "plt.xlabel('true label')\n",
+    "plt.ylabel('predicted label')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 207,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "testing_predictions = []\n",
+    "for i in range(len(X_test)):\n",
+    "    if predictions[i] == 1:\n",
+    "        testing_predictions.append('java')\n",
+    "    elif predictions[i] == 2:\n",
+    "        testing_predictions.append('php')\n",
+    "    elif predictions[i] == 3:\n",
+    "        testing_predictions.append('R')\n",
+    "    elif predictions[i] == 4:\n",
+    "        testing_predictions.append('javaScript')\n",
+    "    else:\n",
+    "        testing_predictions.append('python')\n",
+    "        \n",
+    "check_df = pd.DataFrame({'actual_label': list(y_test), 'prediction': testing_predictions, 'title':list(X_test)})\n",
+    "check_df.replace(to_replace=0, value='python', inplace=True)\n",
+    "check_df.replace(to_replace=1, value='java', inplace=True)\n",
+    "check_df.replace(to_replace=2, value='php', inplace=True)\n",
+    "check_df.replace(to_replace=3, value='R', inplace=True)\n",
+    "check_df.replace(to_replace=4, value='javascript', inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 208,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>actual_label</th>\n",
+       "      <th>prediction</th>\n",
+       "      <th>title</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>python</td>\n",
+       "      <td>python</td>\n",
+       "      <td>need to convert a object column to int/ float ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>java</td>\n",
+       "      <td>java</td>\n",
+       "      <td>Maven Failed to execute goal org.apache.maven....</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>java</td>\n",
+       "      <td>java</td>\n",
+       "      <td>SSL Principal Mapping in Kafka</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>python</td>\n",
+       "      <td>python</td>\n",
+       "      <td>How can I optimse my code such that I am able ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>php</td>\n",
+       "      <td>php</td>\n",
+       "      <td>How to Get insert_id When Creating a Transacti...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>...</th>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7039</th>\n",
+       "      <td>R</td>\n",
+       "      <td>R</td>\n",
+       "      <td>R Fill new columns with NA if lag condition is...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7040</th>\n",
+       "      <td>java</td>\n",
+       "      <td>python</td>\n",
+       "      <td>How to pick out and multiply odd numbers with ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7041</th>\n",
+       "      <td>python</td>\n",
+       "      <td>python</td>\n",
+       "      <td>Migrate Tensorflow 1.x code to Tensorflow 2.x ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7042</th>\n",
+       "      <td>javascript</td>\n",
+       "      <td>javaScript</td>\n",
+       "      <td>React Native Swipeable close after onPress not...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7043</th>\n",
+       "      <td>java</td>\n",
+       "      <td>java</td>\n",
+       "      <td>Trying to pass a JSON Converter funtion as a p...</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>7044 rows × 3 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "     actual_label  prediction  \\\n",
+       "0          python      python   \n",
+       "1            java        java   \n",
+       "2            java        java   \n",
+       "3          python      python   \n",
+       "4             php         php   \n",
+       "...           ...         ...   \n",
+       "7039            R           R   \n",
+       "7040         java      python   \n",
+       "7041       python      python   \n",
+       "7042   javascript  javaScript   \n",
+       "7043         java        java   \n",
+       "\n",
+       "                                                  title  \n",
+       "0     need to convert a object column to int/ float ...  \n",
+       "1     Maven Failed to execute goal org.apache.maven....  \n",
+       "2                        SSL Principal Mapping in Kafka  \n",
+       "3     How can I optimse my code such that I am able ...  \n",
+       "4     How to Get insert_id When Creating a Transacti...  \n",
+       "...                                                 ...  \n",
+       "7039  R Fill new columns with NA if lag condition is...  \n",
+       "7040  How to pick out and multiply odd numbers with ...  \n",
+       "7041  Migrate Tensorflow 1.x code to Tensorflow 2.x ...  \n",
+       "7042  React Native Swipeable close after onPress not...  \n",
+       "7043  Trying to pass a JSON Converter funtion as a p...  \n",
+       "\n",
+       "[7044 rows x 3 columns]"
+      ]
+     },
+     "execution_count": 208,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "check_df[['actual_label', 'prediction','title']]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
